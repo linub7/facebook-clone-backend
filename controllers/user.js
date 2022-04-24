@@ -80,11 +80,19 @@ exports.register = async (req, res) => {
 };
 
 exports.activate = async (req, res) => {
-  const {
-    body: { token },
-  } = req;
-  const user = jwt.verify(token, process.env.JWT_SECRET);
   try {
+    const {
+      body: { token },
+    } = req;
+    const validUser = req.user.id;
+
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (validUser !== user.id)
+      return res.status(400).json({
+        message:
+          'You do not have the authorization to complete this operation.!',
+      });
     const check = await User.findById(user.id);
     if (check.verified == true) {
       return res
@@ -140,4 +148,8 @@ exports.login = async (req, res) => {
     console.log(err);
     res.status(500).json({ message: err.message });
   }
+};
+
+exports.test = async (req, res) => {
+  console.log(req.user);
 };
