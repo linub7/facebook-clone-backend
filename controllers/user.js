@@ -114,10 +114,10 @@ exports.login = async (req, res) => {
         message:
           'This email does not exist.Please register or try another email!',
       });
-    if (!user.verified)
-      return res.status(400).json({
-        message: 'Please verified your account',
-      });
+    // if (!user.verified)
+    //   return res.status(400).json({
+    //     message: 'Please verified your account',
+    //   });
     const check = await bcrypt.compare(password, user.password);
     if (!check)
       return res.status(400).json({
@@ -136,5 +136,8 @@ exports.login = async (req, res) => {
       message:
         'Register Success! Please see your email inbox and activate your account!',
     });
-  } catch (err) {}
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: err.message });
+  }
 };
