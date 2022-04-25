@@ -150,6 +150,23 @@ exports.login = async (req, res) => {
   }
 };
 
-exports.test = async (req, res) => {
-  console.log(req.user);
+exports.sendVerification = async (req, res) => {
+  try {
+    const id = req.user.id;
+    const user = await User.findById(id);
+    if (!user) return res.status(400).json({ message: 'User not found!' });
+    if (user.verified === true)
+      return res.status(400).json({ message: 'Account already activated' });
+
+    const emailVerification = generateToken({ id: user._id.toString() }, '30m');
+    const url = `${process.env.BASE_URL}/activate/${emailVerification}`;
+    sendVerificationEmail(user.email, user.first_name, url);
+
+    return res
+      .status(200)
+      .json({ message: 'Email verification has been sent to your email' });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: err.message });
+  }
 };
