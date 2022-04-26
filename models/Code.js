@@ -8,7 +8,7 @@ const {
 
 const codeSchema = new mongoose.Schema({
   code: {
-    type: Number,
+    type: String,
     required: true,
   },
   user: {

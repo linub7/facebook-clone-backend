@@ -210,3 +210,50 @@ exports.sendResetPasswordCode = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.validateResetCode = async (req, res) => {
+  try {
+    const {
+      body: { email, code },
+    } = req;
+
+    const user = await User.findOne({ email }).select('-password');
+    if (!user) return res.status(400).json({ message: 'User not found' });
+    const dbCode = await Code.findOne({ user: user._id });
+    console.log('CODE', code);
+    console.log('DB_CODE', dbCode.code);
+    if (!dbCode) return res.status(400).json({ message: 'Code not found' });
+    if (dbCode.code !== code)
+      return res.status(400).json({ message: 'Verification code is wrong' });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const {
+      body: { email, password, code },
+    } = req;
+    const tempUser = await User.findOne({ email }).select('-password');
+    const dbCode = await Code.findOne({ user: tempUser._id });
+    if (dbCode.code !== code)
+      return res.status(400).json({
+        message:
+          'OOPS!Wrong credentials!Authorized failed! you cannot change password',
+      });
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    await User.findOneAndUpdate(
+      { email },
+      { password: hashedPassword },
+      { runValidators: true, new: true }
+    );
+    return res.status(200).json({ message: 'Password changed successfully' });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: err.message });
+  }
+};
