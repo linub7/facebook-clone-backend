@@ -10,3 +10,13 @@ exports.createPost = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.getPosts = async (req, res) => {
+  try {
+    const posts = await Post.find({}).populate('user').sort('-createdAt');
+    res.json(posts);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: err.message });
+  }
+};
