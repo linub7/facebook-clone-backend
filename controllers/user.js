@@ -257,3 +257,16 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.getProfile = async (req, res) => {
+  try {
+    const {
+      params: { username },
+    } = req;
+    const user = await User.findOne({ username }).select('-password');
+    if (!user) return res.status(400).json({ message: 'User not found' });
+    return res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

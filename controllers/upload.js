@@ -45,6 +45,24 @@ const uploadToCloudinary = async (file, path) => {
   });
 };
 
+exports.listImages = async (req, res) => {
+  const {
+    body: { path, max, sort },
+  } = req;
+
+  cloudinary.v2.search
+    .expression(`${path}`)
+    .sort_by('created_at', `${sort}`)
+    .max_results(max)
+    .execute()
+    .then((result) => {
+      res.json(result);
+    })
+    .catch((err) => {
+      console.log(err.error.message);
+    });
+};
+
 const removeTmp = (path) => {
   fs.unlink(path, (err) => {
     if (err) throw err;
