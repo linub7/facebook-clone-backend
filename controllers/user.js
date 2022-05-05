@@ -5,6 +5,7 @@ const {
 } = require('../helpers/validation');
 const User = require('../models/User');
 const Code = require('../models/Code');
+const Post = require('../models/Post');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../helpers/tokens');
 const { sendVerificationEmail, sendResetCode } = require('../helpers/mailer');
@@ -265,7 +266,28 @@ exports.getProfile = async (req, res) => {
     } = req;
     const user = await User.findOne({ username }).select('-password');
     if (!user) return res.status(400).json({ message: 'User not found' });
-    return res.json(user);
+    const posts = await Post.find({ user: user._id })
+      .populate('user')
+      .sort('-createdAt');
+    return res.status(200).json({ ...user.toObject(), posts });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.updateProfilePicture = async (req, res) => {
+  try {
+    const {
+      body: { url },
+    } = req;
+    const userId = req.user.id;
+    await User.findByIdAndUpdate(
+      userId,
+      { picture: url },
+      { new: true, runValidators: true }
+    );
+
+    res.send(url);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
