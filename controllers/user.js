@@ -144,6 +144,7 @@ exports.login = async (req, res) => {
       last_name: user.last_name,
       token,
       verified: user.verified,
+      details: user.details,
       message:
         'Register Success! Please see your email inbox and activate your account!',
     });
@@ -306,6 +307,24 @@ exports.updateCoverPicture = async (req, res) => {
     );
 
     res.send(url);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.updateDetails = async (req, res) => {
+  try {
+    const {
+      body: { infos },
+    } = req;
+    const userId = req.user.id;
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { details: infos },
+      { new: true, runValidators: true }
+    );
+
+    res.json(updatedUser.details);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
