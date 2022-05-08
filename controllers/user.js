@@ -269,7 +269,7 @@ exports.getProfile = async (req, res) => {
     const posts = await Post.find({ user: user._id })
       .populate('user')
       .sort('-createdAt');
-    return res.status(200).json({ ...user.toObject(), posts });
+    return res.status(200).json({ ...user.toObject(), posts, ok: true });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -284,6 +284,24 @@ exports.updateProfilePicture = async (req, res) => {
     await User.findByIdAndUpdate(
       userId,
       { picture: url },
+      { new: true, runValidators: true }
+    );
+
+    res.send(url);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.updateCoverPicture = async (req, res) => {
+  try {
+    const {
+      body: { url },
+    } = req;
+    const userId = req.user.id;
+    await User.findByIdAndUpdate(
+      userId,
+      { cover: url },
       { new: true, runValidators: true }
     );
 

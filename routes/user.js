@@ -10,6 +10,7 @@ const {
   changePassword,
   getProfile,
   updateProfilePicture,
+  updateCoverPicture,
 } = require('../controllers/user');
 const { authUser } = require('../middlewares/auth');
 
@@ -25,5 +26,6 @@ router.post('/validate-reset-code', validateResetCode);
 router.post('/change-password', changePassword);
 router.get('/get-profile/:username', authUser, getProfile);
 router.put('/update-profile-picture', authUser, updateProfilePicture);
+router.put('/update-cover-picture', authUser, updateCoverPicture);
 
 module.exports = router;
