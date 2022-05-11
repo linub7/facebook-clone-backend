@@ -265,12 +265,34 @@ exports.getProfile = async (req, res) => {
     const {
       params: { username },
     } = req;
+    const me = await User.findById(req.user.id);
     const user = await User.findOne({ username }).select('-password');
+    let friendShip = {
+      friends: false,
+      following: false,
+      reqSent: false,
+      reqReceived: false,
+    };
     if (!user) return res.status(400).json({ message: 'User not found' });
+
+    if (me.friends.includes(user._id) && user.friends.includes(me._id)) {
+      friendShip.friends = true;
+    }
+    if (me.following.includes(user._id)) {
+      friendShip.following = true;
+    }
+    if (me.requests.includes(user._id)) {
+      friendShip.reqReceived = true;
+    }
+    if (user.requests.includes(me._id)) {
+      friendShip.reqSent = true;
+    }
     const posts = await Post.find({ user: user._id })
       .populate('user')
       .sort('-createdAt');
-    return res.status(200).json({ ...user.toObject(), posts, ok: true });
+    return res
+      .status(200)
+      .json({ ...user.toObject(), posts, ok: true, friendShip });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -348,9 +370,9 @@ exports.addFriend = async (req, res) => {
       !receiver.requests.includes(sender._id) &&
       !receiver.friends.includes(sender._id)
     ) {
-      await receiver.updateOne({ $push: { requests: sender._id } });
-      await receiver.updateOne({ $push: { followers: sender._id } });
-      await sender.updateOne({ $push: { following: receiver._id } });
+      await receiver.updateOne({ $addToSet: { requests: sender._id } });
+      await receiver.updateOne({ $addToSet: { followers: sender._id } });
+      await sender.updateOne({ $addToSet: { following: receiver._id } });
       res.json({ message: 'Friend request has been sent' });
     } else {
       return res.status(400).json({ message: 'Already sent' });
@@ -389,6 +411,82 @@ exports.acceptRequest = async (req, res) => {
       res.json({ message: 'You successfully Accepted request' });
     } else {
       return res.status(400).json({ message: 'Already Accepted' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.deleteRequest = async (req, res) => {
+  try {
+    const {
+      params: { id },
+    } = req;
+    if (id === req.user.id) {
+      return res
+        .status(400)
+        .json({ message: 'You can not delete request for yourself' });
+    }
+
+    const sender = await User.findById(req.user.id);
+    const receiver = await User.findById(id);
+
+    if (receiver.requests.includes(sender._id)) {
+      await receiver.update({
+        $pull: {
+          requests: sender._id,
+          followers: sender._id,
+        },
+      });
+      await sender.updateOne({
+        $pull: {
+          following: receiver._id,
+        },
+      });
+      res.json({ message: 'delete Request successfully done!' });
+    } else {
+      return res
+        .status(400)
+        .json({ message: 'you do not sent request before' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.unFriend = async (req, res) => {
+  try {
+    const {
+      params: { id },
+    } = req;
+    if (id === req.user.id) {
+      return res.status(400).json({ message: 'You can not unFriend yourself' });
+    }
+
+    const sender = await User.findById(req.user.id);
+    const receiver = await User.findById(id);
+
+    if (
+      receiver.friends.includes(sender._id) &&
+      sender.friends.includes(receiver._id)
+    ) {
+      await receiver.update({
+        $pull: {
+          friends: sender._id,
+          followers: sender._id,
+          following: sender._id,
+        },
+      });
+      await sender.update({
+        $pull: {
+          friends: receiver._id,
+          following: receiver._id,
+          followers: receiver._id,
+        },
+      });
+      res.json({ message: 'un Friend successfully done!' });
+    } else {
+      return res.status(400).json({ message: 'you are not friend!' });
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
