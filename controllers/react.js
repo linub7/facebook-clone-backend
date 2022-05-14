@@ -85,8 +85,6 @@ exports.getReacts = async (req, res) => {
       return b.count - a.count;
     });
 
-    console.log(finalArray);
-
     const check = await React.findOne({ postRef: postId, reactBy: userId });
     // check & check1 do the same operation
     // const check1 = reacts.find(

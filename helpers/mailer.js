@@ -18,12 +18,20 @@ const auth = new OAuth2(
   oauthLink
 );
 
-exports.sendVerificationEmail = (email, name, url) => {
+exports.sendVerificationEmail = async (email, name, url) => {
   auth.setCredentials({
     refresh_token: FACEBOOK_CLONE_AUTHENTICATION_REFRESH,
   });
 
-  const accessToken = auth.getAccessToken();
+  // const accessToken = auth.getAccessToken();
+  const accessToken = await new Promise((resolve, reject) => {
+    auth.getAccessToken((err, token) => {
+      if (err) {
+        reject('Failed to create access token');
+      }
+      resolve(token);
+    });
+  });
   const stmp = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -33,6 +41,9 @@ exports.sendVerificationEmail = (email, name, url) => {
       clientSecret: FACEBOOK_CLONE_AUTHENTICATION_SECRET,
       refreshToken: FACEBOOK_CLONE_AUTHENTICATION_REFRESH,
       accessToken,
+    },
+    tls: {
+      rejectUnauthorized: false,
     },
   });
 
