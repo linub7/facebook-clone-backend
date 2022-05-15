@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 
-const {
-  Types: { ObjectId },
-} = mongoose;
+const { ObjectId } = mongoose;
 
 const reactSchema = new mongoose.Schema({
   react: {

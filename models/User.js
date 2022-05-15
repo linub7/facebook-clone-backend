@@ -1,9 +1,7 @@
 const mongoose = require('mongoose');
 
 const {
-  Schema: {
-    Types: { ObjectId },
-  },
+  Schema: { ObjectId },
 } = mongoose;
 
 const userSchema = new mongoose.Schema(

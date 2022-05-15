@@ -289,8 +289,10 @@ exports.getProfile = async (req, res) => {
     }
     const posts = await Post.find({ user: user._id })
       .populate('user')
+      .populate('comments.commentBy', 'picture first_name last_name username')
       .sort('-createdAt');
     await user.populate('friends', 'first_name last_name username picture');
+
     return res
       .status(200)
       .json({ ...user.toObject(), posts, ok: true, friendShip });

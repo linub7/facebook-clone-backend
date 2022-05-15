@@ -1,9 +1,7 @@
 const mongoose = require('mongoose');
 
 const {
-  Schema: {
-    Types: { ObjectId },
-  },
+  Schema: { ObjectId },
 } = mongoose;
 
 const postSchema = new mongoose.Schema(
@@ -41,7 +39,7 @@ const postSchema = new mongoose.Schema(
         },
         commentAt: {
           type: Date,
-          default: new Date(),
+          required: true,
         },
       },
     ],
