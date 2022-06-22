@@ -10,6 +10,7 @@ const bcrypt = require('bcrypt');
 const { generateToken } = require('../helpers/tokens');
 const { sendVerificationEmail, sendResetCode } = require('../helpers/mailer');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const generateCode = require('../helpers/generateCode');
 
 exports.register = async (req, res) => {
@@ -402,7 +403,7 @@ exports.cancelRequest = async (req, res) => {
           $pull: { followers: sender._id },
         });
         await sender.updateOne({
-          $pull: { following: sender._id },
+          $pull: { following: receiver._id },
         });
         res.json({ message: 'you successfully canceled request' });
       } else {
@@ -656,6 +657,30 @@ exports.deleteSearchHistory = async (req, res) => {
      * $pull: {search: {_id: searchId}}}}})
      */
     return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getFriendsPageInfos = async (req, res) => {
+  try {
+    const {
+      user: { id },
+    } = req;
+    const user = await User.findById(id)
+      .select('friends requests')
+      .populate('friends', 'first_name last_name picture username')
+      .populate('requests', 'first_name last_name picture username');
+
+    const sentRequests = await User.find({
+      requests: mongoose.Types.ObjectId(id),
+    }).select('first_name last_name picture username');
+
+    res.json({
+      friends: user.friends,
+      requests: user.requests,
+      sentRequests,
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
