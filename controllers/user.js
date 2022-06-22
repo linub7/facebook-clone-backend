@@ -471,6 +471,7 @@ exports.unfollow = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 exports.acceptRequest = async (req, res) => {
   try {
     if (req.user.id !== req.params.id) {
@@ -499,6 +500,7 @@ exports.acceptRequest = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 exports.unFriend = async (req, res) => {
   try {
     if (req.user.id !== req.params.id) {
@@ -534,6 +536,7 @@ exports.unFriend = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 exports.deleteRequest = async (req, res) => {
   try {
     if (req.user.id !== req.params.id) {
@@ -561,5 +564,99 @@ exports.deleteRequest = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+exports.search = async (req, res) => {
+  try {
+    const {
+      params: { searchTerm },
+    } = req;
+    const result = await User.find({ $text: { $search: searchTerm } })
+      .select('first_name last_name username picture')
+      .limit(5);
+    res.json({ result });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.addToSearchHistory = async (req, res) => {
+  try {
+    const {
+      body: { searchUser },
+    } = req;
+    const search = {
+      user: searchUser,
+      createdAt: new Date(),
+    };
+    const user = await User.findById(req.user.id);
+    const check = user.search.find(
+      (el) => el.user.toString() === searchUser.toString()
+    );
+
+    if (check) {
+      await User.updateOne(
+        { _id: req.user.id, 'search._id': check._id },
+        { $set: { 'search.$.createdAt': new Date() } }
+      );
+    } else {
+      await User.findByIdAndUpdate(req.user.id, { $push: { search } });
+    }
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getSearchHistory = async (req, res) => {
+  try {
+    const {
+      user: { id },
+    } = req;
+
+    const user = await User.findById(id)
+      .select('search')
+      .populate('search.user', 'first_name last_name username picture');
+
+    if (!user) return res.status(404).json({ message: ' User not found' });
+
+    res.json({ result: user.search });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteSearchHistory = async (req, res) => {
+  try {
+    const {
+      body: { searchId },
+      user: { id },
+    } = req;
+
+    const user = await User.findById(id)
+      .select('search')
+      .populate('search.user', 'first_name last_name');
+    if (!user) return res.status(404).json({ message: ' User not found' });
+
+    for (let index = 0; index < user.search?.length; index++) {
+      const element = user.search?.[index];
+      if (element._id.toString() === searchId.toString()) {
+        await User.updateOne(
+          { _id: id, 'search._id': element._id },
+          { $pull: { search: { _id: element._id } } }
+        );
+      }
+    }
+    // or
+    /**
+     * await User.updateOne({
+     *  _id: id,
+     * }, {
+     * $pull: {search: {_id: searchId}}}}})
+     */
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };

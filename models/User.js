@@ -99,6 +99,10 @@ const userSchema = new mongoose.Schema(
           type: ObjectId,
           ref: 'User',
         },
+        createdAt: {
+          type: Date,
+          required: true,
+        },
       },
     ],
     details: {

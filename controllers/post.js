@@ -1,9 +1,14 @@
 const Post = require('../models/Post');
+const User = require('../models/User');
 
 exports.createPost = async (req, res) => {
   try {
     const { body } = req;
     const newPost = await new Post(body).save();
+    await newPost.populate(
+      'user',
+      'first_name last_name cover picture username'
+    );
     return res.json(newPost);
   } catch (err) {
     console.log(err);
@@ -13,11 +18,33 @@ exports.createPost = async (req, res) => {
 
 exports.getPosts = async (req, res) => {
   try {
-    const posts = await Post.find({})
-      .populate('user')
-      .populate('comments.commentBy', 'picture first_name last_name username')
+    const {
+      user: { id },
+    } = req;
+
+    const followingTmp = await User.findById(id).select('following');
+    const following = followingTmp.following;
+    const promises = following.map((user) => {
+      return Post.find({ user })
+        .populate('user', 'first_name last_name picture username')
+        .populate('comments.commentBy', 'first_name last_name picture username')
+        .sort('-createdAt');
+      // .limit(10);
+    });
+    const followingPosts = (await Promise.all(promises)).flat(); // flat() => convert [[{},{},...]] into [{}, {},...]
+    const userPosts = await Post.find({ user: id })
+      .populate('user', 'first_name last_name picture username cover')
+      .populate(
+        'comments.commentBy',
+        'first_name last_name picture username cover'
+      )
       .sort('-createdAt');
-    res.json(posts);
+    // .limit(10);
+    followingPosts.push(...[...userPosts]);
+    followingPosts.sort((a, b) => {
+      return b.createdAt - a.createdAt;
+    });
+    res.json(followingPosts);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: err.message });
@@ -68,7 +95,7 @@ exports.deleteComment = async (req, res) => {
       return res.status(400).json({
         message: 'Authorized failed! You can only delete your own comments',
       });
-    await post.update({ $pull: { comments: { _id: commentId } } });
+    await post.updateOne({ $pull: { comments: { _id: commentId } } });
     res.json({ post, message: 'Delete Successfully' });
   } catch (err) {
     console.log(err);

@@ -19,6 +19,10 @@ const {
   acceptRequest,
   unFriend,
   deleteRequest,
+  search,
+  addToSearchHistory,
+  getSearchHistory,
+  deleteSearchHistory,
 } = require('../controllers/user');
 const { authUser } = require('../middlewares/auth');
 
@@ -43,5 +47,9 @@ router.put('/follow/:id', authUser, follow);
 router.put('/unfollow/:id', authUser, unfollow);
 router.put('/accept-request/:id', authUser, acceptRequest);
 router.put('/delete-request/:id', authUser, deleteRequest);
+router.post('/search/:searchTerm', authUser, search);
+router.put('/addToSearchHistory', authUser, addToSearchHistory);
+router.get('/get-search-history', authUser, getSearchHistory);
+router.put('/delete-search-history', authUser, deleteSearchHistory);
 
 module.exports = router;
