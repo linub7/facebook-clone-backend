@@ -23,15 +23,17 @@ exports.sendVerificationEmail = async (email, name, url) => {
     refresh_token: FACEBOOK_CLONE_AUTHENTICATION_REFRESH,
   });
 
-  // const accessToken = auth.getAccessToken();
-  const accessToken = await new Promise((resolve, reject) => {
-    auth.getAccessToken((err, token) => {
-      if (err) {
-        reject('Failed to create access token');
-      }
-      resolve(token);
-    });
-  });
+  const accessToken = await auth.getAccessToken();
+  // const accessToken = await new Promise((resolve, reject) => {
+  //   auth.getAccessToken((err, token) => {
+  //     if (err) {
+  //       console.log(err);
+  //       reject('Failed to create access token');
+  //     }
+  //     resolve(token);
+  //   });
+  // });
+
   const stmp = nodemailer.createTransport({
     service: 'gmail',
     auth: {

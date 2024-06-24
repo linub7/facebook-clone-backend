@@ -150,6 +150,8 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    resetPasswordCode: String,
+    resetPasswordExpire: Date,
   },
   {
     timestamps: true,

@@ -12,6 +12,7 @@ const { sendVerificationEmail, sendResetCode } = require('../helpers/mailer');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const generateCode = require('../helpers/generateCode');
+const sendEmail = require('../utils/sendMail');
 
 exports.register = async (req, res) => {
   const {
@@ -64,7 +65,14 @@ exports.register = async (req, res) => {
     }).save();
     const emailVerification = generateToken({ id: user._id.toString() }, '30m');
     const url = `${process.env.BASE_URL}/activate/${emailVerification}`;
-    sendVerificationEmail(user.email, user.first_name, url);
+    const message = `<div style="max-width:700px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;font-family:Roboto;font-weight:600;color:#3b5998"><img style="width:30px" src="https://res.cloudinary.com/dmhcnhtng/image/upload/v1645134414/logo_cs1si5.png" alt="facebook"><span>Action require: Activate your facebook account</span></div><div style="padding:1rem 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;color:#141823;font-size:17px;font-family:Roboto"><span>Hello ${user.first_name}</span><div style="padding:20px 0"><span style="padding:1.5rem 0">You recently created an account on Facebook. To complete your registration, please confirm your account</span></div><a style="width:200px;padding:10px 15px;background:#4c649b;color:#fff;text-decoration:none;font-weight:600" href=${url}>Confirm your account</a><br><div style="padding-top:20px"><span style="margin:1.5rem 0;color:#898f9c">Facebook allows you to stay in touch with all your friends, once registered on facebook, you can share photos, organize events and much more.</span></div></div>`;
+    // await sendVerificationEmail(user.email, user.first_name, url);
+    const options = {
+      email: user.email,
+      subject: 'Facebook clone email verification',
+      message,
+    };
+    await sendEmail(options);
     const token = generateToken({ id: user._id.toString() }, '7d');
     res.send({
       id: user._id,
@@ -97,6 +105,7 @@ exports.activate = async (req, res) => {
         message:
           'You do not have the authorization to complete this operation.!',
       });
+
     const check = await User.findById(user.id);
     if (check.verified == true) {
       return res
@@ -165,7 +174,14 @@ exports.sendVerification = async (req, res) => {
 
     const emailVerification = generateToken({ id: user._id.toString() }, '30m');
     const url = `${process.env.BASE_URL}/activate/${emailVerification}`;
-    sendVerificationEmail(user.email, user.first_name, url);
+    // await sendVerificationEmail(user.email, user.first_name, url);
+    const message = `<div style="max-width:700px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;font-family:Roboto;font-weight:600;color:#3b5998"><img style="width:30px" src="https://res.cloudinary.com/dmhcnhtng/image/upload/v1645134414/logo_cs1si5.png" alt="facebook"><span>Action require: Activate your facebook account</span></div><div style="padding:1rem 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;color:#141823;font-size:17px;font-family:Roboto"><span>Hello ${user.first_name}</span><div style="padding:20px 0"><span style="padding:1.5rem 0">You recently created an account on Facebook. To complete your registration, please confirm your account</span></div><a style="width:200px;padding:10px 15px;background:#4c649b;color:#fff;text-decoration:none;font-weight:600" href=${url}>Confirm your account</a><br><div style="padding-top:20px"><span style="margin:1.5rem 0;color:#898f9c">Facebook allows you to stay in touch with all your friends, once registered on facebook, you can share photos, organize events and much more.</span></div></div>`;
+    const options = {
+      email: user.email,
+      subject: 'Facebook clone email verification',
+      message,
+    };
+    await sendEmail(options);
 
     return res
       .status(200)
@@ -204,7 +220,14 @@ exports.sendResetPasswordCode = async (req, res) => {
       code,
       user: user._id,
     }).save();
-    sendResetCode(user.email, user.first_name, code);
+    const message = `<div style="max-width:700px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;font-family:Roboto;font-weight:600;color:#3b5998"><img style="width:30px" src="https://res.cloudinary.com/dmhcnhtng/image/upload/v1645134414/logo_cs1si5.png" alt="facebook"><span>Action require: Reset Password Code</span></div><div style="padding:1rem 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;color:#141823;font-size:17px;font-family:Roboto"><span>Hello ${user.first_name}</span><div style="padding:20px 0"><span style="padding:1.5rem 0">Your reset password code.</span></div><a style="width:200px;padding:10px 15px;background:#4c649b;color:#fff;text-decoration:none;font-weight:600">${savedCode}</a><br><div style="padding-top:20px"><span style="margin:1.5rem 0;color:#898f9c">Facebook allows you to stay in touch with all your friends, once registered on facebook, you can share photos, organize events and much more.</span></div></div>`;
+    const options = {
+      email: user.email,
+      subject: 'Reset Facebook Password',
+      message,
+    };
+    await sendEmail(options);
+    // sendResetCode(user.email, user.first_name, code);
     return res
       .status(200)
       .json({ message: 'Email reset code has been sent to your email' });
@@ -387,6 +410,7 @@ exports.addFriend = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 exports.cancelRequest = async (req, res) => {
   try {
     if (req.user.id !== req.params.id) {
@@ -418,6 +442,7 @@ exports.cancelRequest = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 exports.follow = async (req, res) => {
   try {
     if (req.user.id !== req.params.id) {
@@ -445,6 +470,7 @@ exports.follow = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 exports.unfollow = async (req, res) => {
   try {
     if (req.user.id !== req.params.id) {

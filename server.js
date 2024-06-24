@@ -10,8 +10,8 @@ const app = express();
 
 app.use(express.json());
 dotenv.config();
-const options = { origin: 'http://localhost:3000' };
-app.use(cors(options));
+// const options = { origin: 'http://localhost:3000' };
+app.use(cors());
 app.use(morgan('dev'));
 app.use(
   fileUpload({
