@@ -23,6 +23,10 @@ readdirSync('./routes').map((r) =>
   app.use(`/api/v1/`, require('./routes/' + r))
 );
 
+app.use('/', (req, res) => {
+  res.json({ message: 'OK' });
+});
+
 // db
 mongoose
   .connect(process.env.MONGODB_URI)
